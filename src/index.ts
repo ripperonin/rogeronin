@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import nacl from 'tweetnacl'
 import { buildPollPayload } from './poll'
 
@@ -6,7 +6,16 @@ type Bindings = {
   DISCORD_PUBLIC_KEY: string
 }
 
-const app = new Hono<{ Bindings: Bindings }>()
+type Env = { Bindings: Bindings }
+
+type DiscordInteraction = {
+  type: number
+  data?: {
+    name?: string
+  }
+}
+
+const app = new Hono<Env>()
 
 function hexToUint8Array(hex: string): Uint8Array | null {
   if (hex.length % 2 !== 0) return null
@@ -28,7 +37,14 @@ function verifyDiscordRequest(
   try {
     const publicKey = hexToUint8Array(publicKeyHex)
     const signature = hexToUint8Array(signatureHex)
-    if (!publicKey || !signature) return false
+    if (
+      !publicKey ||
+      !signature ||
+      publicKey.length !== nacl.sign.publicKeyLength ||
+      signature.length !== nacl.sign.signatureLength
+    ) {
+      return false
+    }
     const message = new TextEncoder().encode(timestamp + body)
     return nacl.sign.detached.verify(message, signature, publicKey)
   } catch {
@@ -36,7 +52,7 @@ function verifyDiscordRequest(
   }
 }
 
-async function handleInteraction(c: any) {
+async function handleInteraction(c: Context<Env>) {
   const signature = c.req.header('x-signature-ed25519')
   const timestamp = c.req.header('x-signature-timestamp')
   const rawBody = await c.req.text()
@@ -56,9 +72,9 @@ async function handleInteraction(c: any) {
     return c.text('Invalid signature', 401)
   }
 
-  let interaction: any
+  let interaction: DiscordInteraction
   try {
-    interaction = JSON.parse(rawBody)
+    interaction = JSON.parse(rawBody) as DiscordInteraction
   } catch {
     return c.text('Invalid JSON', 400)
   }

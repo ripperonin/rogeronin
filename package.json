@@ -13,7 +13,6 @@
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
-    "@types/bun": "^1.4.0",
     "wrangler": "^4.110.0"
   }
 }

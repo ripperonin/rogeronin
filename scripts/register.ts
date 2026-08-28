@@ -7,6 +7,11 @@
  *   DISCORD_APPLICATION_ID - Application ID
  */
 
+declare const process: {
+  env: Record<string, string | undefined>
+  exit(code: number): never
+}
+
 const token = process.env.DISCORD_TOKEN
 const appId = process.env.DISCORD_APPLICATION_ID
 
@@ -22,7 +27,9 @@ if (!appId) {
 const command = {
   name: 'poll-bg3',
   description: 'Create Baldurs Gate 3 next sesh poll for the next 7 days',
-  // No options - fixed poll
+  type: 1,
+  integration_types: [0], // GUILD_INSTALL
+  contexts: [0], // GUILD - prevent the command appearing in DMs
 }
 
 const url = `https://discord.com/api/v10/applications/${appId}/commands`
@@ -30,12 +37,13 @@ const url = `https://discord.com/api/v10/applications/${appId}/commands`
 console.log(`Registering global command /${command.name} to ${url} ...`)
 
 const res = await fetch(url, {
-  method: 'PUT',
+  // POST is an upsert by command name, unlike PUT which replaces every global command.
+  method: 'POST',
   headers: {
     Authorization: `Bot ${token}`,
     'Content-Type': 'application/json',
   },
-  body: JSON.stringify([command]),
+  body: JSON.stringify(command),
 })
 
 const body = await res.text()
@@ -48,5 +56,7 @@ if (!res.ok) {
 
 console.log(`Success: ${res.status}`)
 console.log(body)
-console.log('Global command will propagate within ~1 hour.')
+console.log('The command is updated globally. Discord will repair clients that have an older command definition.')
 console.log('Set Interactions Endpoint URL in Developer Portal to https://<worker>.workers.dev/interactions')
+
+export {}
