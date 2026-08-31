@@ -22,7 +22,7 @@ function getCentralDateParts(date: Date): { year: number; month: number; day: nu
 }
 
 /**
- * Generates 7 poll answer strings starting tomorrow.
+ * Generates 7 poll answer strings starting the day after tomorrow.
  * Format: "Monday (MM/DD @ 8pm Central)"
  * @param baseDate - base date to calculate from, defaults to now
  */
@@ -31,7 +31,7 @@ export function generatePollAnswers(baseDate: Date = new Date()): { poll_media: 
   const centralDate = getCentralDateParts(baseDate)
   const weekdayFormatter = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'UTC' })
 
-  for (let i = 1; i <= 7; i++) {
+  for (let i = 2; i <= 8; i++) {
     // Add calendar days, rather than 24-hour intervals, so daylight saving changes cannot repeat or skip a date.
     const d = new Date(Date.UTC(centralDate.year, centralDate.month - 1, centralDate.day + i))
     const weekday = weekdayFormatter.format(d)

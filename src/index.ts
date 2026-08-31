@@ -1,5 +1,6 @@
 import { Hono, type Context } from 'hono'
 import nacl from 'tweetnacl'
+import { POLL_MENTION_USER_IDS } from './mentions'
 import { buildPollPayload } from './poll'
 
 type Bindings = {
@@ -94,6 +95,10 @@ async function handleInteraction(c: Context<Env>) {
       return c.json({
         type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
         data: {
+          content: POLL_MENTION_USER_IDS.map((userId) => `<@${userId}>`).join(' '),
+          allowed_mentions: {
+            users: POLL_MENTION_USER_IDS,
+          },
           poll,
         },
       })
